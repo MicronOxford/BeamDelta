@@ -15,6 +15,7 @@ class App(QWidget):
         self.width = 640
         self.height = 480
         self.initUI()
+        self.show_flag = False
  
     def initUI(self):
         self.setWindowTitle(self.title)
@@ -33,7 +34,10 @@ class App(QWidget):
         self.resize(self.pixmap.width(),self.pixmap.height())
         
         self.show()
-        
+
+    def closeEvent(self, event):
+        self.show_flag = False
+        QWidget.closeEvent(event)
  
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -44,7 +48,8 @@ if __name__ == '__main__':
     camera.set_exposure_time(0.15)
     colimage=np.zeros((512,512,3),dtype=np.uint8)
 
-    while(1):
+    ex.show_flag = True
+    while(ex.show_flag):
         data,timestamp=camera.trigger_and_wait()
         colimage[:,:,0]=np.array(data)
         colimage[:,:,1]=colimage[:,:,0]
@@ -54,7 +59,6 @@ if __name__ == '__main__':
 
         ex.pixmap = QPixmap(qimage)
         ex.label.setPixmap(ex.pixmap)
-        ex.show()
 
+        app.processEvents()
     sys.exit(app.exec_())
-
