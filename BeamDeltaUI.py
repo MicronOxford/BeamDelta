@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QMainWindow, QPushButton
+from PyQt5.QtWidgets import *#QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QMainWindow, QPushButton
 from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtCore import Qt
 import sys
 from microscope import clients
 import numpy as np
@@ -11,7 +12,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__(parent)
         self.form_widget = MainWidget(self)
         self.setCentralWidget(self.form_widget)
-        self.resize(self.form_widget.main_width+50, self.form_widget.main_height+50)
+        self.resize(self.form_widget.width()+100, self.form_widget.height()+100)
 
     def closeEvent(self, event):
         self.show_flag = False
@@ -31,8 +32,8 @@ class MainWidget(QWidget):
 
         self.setLayout(self.layout)
 
-        self.main_width = self.camera1.app_width + self.camera2.app_width
-        self.main_height = max(self.camera1.app_height, self.camera2.app_height)
+        self.main_width = self.camera1.width() + self.camera2.width()
+        self.main_height = max(self.camera1.height(), self.camera2.height())
         self.resize(self.main_width, self.main_height)
 
 
@@ -50,7 +51,7 @@ class CamInterfaceApp(QWidget):
 
         self.setLayout(self.layout)
 
-        self.app_width = self.camera.pixmap.width()
+        self.app_width = min(self.camera.pixmap.width(),self.buttons.width())
         self.app_height = self.camera.pixmap.height() + 125
         self.resize(self.app_width,self.app_height)
 
@@ -60,16 +61,19 @@ class ToggleButtonApp(QWidget):
         super().__init__()
         self.layout = QHBoxLayout(self)
 
-        self.button1 = QPushButton("Button 1")
+        self.button1 = QPushButton("Live Image")
         self.layout.addWidget(self.button1)
 
-        self.button2 = QPushButton("Button 2")
+        self.button2 = QPushButton("Alignment Centroid")
         self.layout.addWidget(self.button2)
+
+        self.button3 = QPushButton("CurrentCentroid")
+        self.layout.addWidget(self.button3)
 
         self.setLayout(self.layout)
 
-        self.total_width = self.button1.width() + self.button2.width()
-        self.total_height = self.button2.height()
+        self.total_width = self.button1.width() + self.button2.width() + self.button3.width()
+        self.total_height = self.button1.height()
         self.resize(self.total_width, self.total_height)
 
 class ImageApp(QWidget):
@@ -95,6 +99,7 @@ class ImageApp(QWidget):
 
         self.pixmap = QPixmap(qimage)
         self.label.setPixmap(self.pixmap)
+        self.label.setAlignment(Qt.AlignHCenter)
         self.resize(self.pixmap.width(),self.pixmap.height())
         
         self.show()
