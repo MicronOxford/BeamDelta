@@ -33,6 +33,7 @@ class MainWindow(QMainWindow):
         self.form_widget = MainWidget(self)
         self.setCentralWidget(self.form_widget)
         self.resize(self.form_widget.width()+100, self.form_widget.height()+100)
+        self.show_flag = True
 
     def closeEvent(self, event):
         self.show_flag = False
@@ -42,15 +43,14 @@ class MainWidget(QWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.layout = QHBoxLayout(self)
+        layout = QHBoxLayout(self)
 
         self.camera1 = CamInterfaceApp(self)
-        self.layout.addWidget(self.camera1)
-
         self.camera2 = CamInterfaceApp(self)
-        self.layout.addWidget(self.camera2)
 
-        self.setLayout(self.layout)
+        layout.addWidget(self.camera1)
+        layout.addWidget(self.camera2)
+        self.setLayout(layout)
 
         self.main_width = self.camera1.width() + self.camera2.width()
         self.main_height = max(self.camera1.height(), self.camera2.height())
@@ -78,16 +78,16 @@ class ToggleButtonApp(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.layout = QHBoxLayout(self)
+        layout = QHBoxLayout(self)
 
         self.button1 = QPushButton("Live Image")
-        self.layout.addWidget(self.button1)
-
         self.button2 = QPushButton("Alignment Centroid")
-        self.layout.addWidget(self.button2)
-
         self.button3 = QPushButton("CurrentCentroid")
-        self.layout.addWidget(self.button3)
+
+        layout.addWidget(self.button1)
+        layout.addWidget(self.button2)
+        layout.addWidget(self.button3)
+        self.setLayout(layout)
 
         self.total_width = self.button1.width() + self.button2.width() + self.button3.width()
         self.total_height = self.button1.height()
@@ -122,8 +122,8 @@ if __name__ == '__main__':
     camera2.set_exposure_time(0.15)
     colimage2 = np.zeros((512, 512, 3), dtype=np.uint8)
 
-    ex.show_flag = True
-    while(ex.show_flag):
+    running = True
+    while(running):
         data1,timestamp1=camera1.trigger_and_wait()
         colimage1[:,:,0]=np.array(data1)
         colimage1[:,:,1]=colimage1[:,:,0]
@@ -144,5 +144,9 @@ if __name__ == '__main__':
         ex.form_widget.camera2.camera.label.setPixmap(ex.form_widget.camera2.camera.pixmap)
 
         app.processEvents()
-        ex.show()
+        
+        if ex.show_flag:
+            ex.show()
+        else:
+            running = False
     sys.exit(app.exec_())
