@@ -29,19 +29,19 @@ class MainWindow(QMainWindow):
 
     def __init__(self, parent=None):
 
-        super(MainWindow, self).__init__(parent)
+        super().__init__(parent)
         self.form_widget = MainWidget(self)
         self.setCentralWidget(self.form_widget)
         self.resize(self.form_widget.width()+100, self.form_widget.height()+100)
 
     def closeEvent(self, event):
         self.show_flag = False
-        QMainWindow.closeEvent(event)
+        super().closeEvent(event)
 
 class MainWidget(QWidget):
 
     def __init__(self, parent):
-        super(MainWidget, self).__init__(parent)
+        super().__init__(parent)
         self.layout = QHBoxLayout(self)
 
         self.camera1 = CamInterfaceApp(self)
@@ -60,16 +60,15 @@ class MainWidget(QWidget):
 class CamInterfaceApp(QWidget):
 
     def __init__(self, parent):
-        super(CamInterfaceApp, self).__init__(parent)
-        self.layout = QVBoxLayout(self)
+        super().__init__(parent)
 
         self.camera = ImageApp()
-        self.layout.addWidget(self.camera,85)
-
         self.buttons = ToggleButtonApp()
-        self.layout.addWidget(self.buttons,15)
 
-        self.setLayout(self.layout)
+        layout = QVBoxLayout()
+        layout.addWidget(self.camera)
+        layout.addWidget(self.buttons)
+        self.setLayout(layout)
 
         self.app_width = min(self.camera.pixmap.width(),self.buttons.width())
         self.app_height = self.camera.pixmap.height() + 125
@@ -90,40 +89,25 @@ class ToggleButtonApp(QWidget):
         self.button3 = QPushButton("CurrentCentroid")
         self.layout.addWidget(self.button3)
 
-        self.setLayout(self.layout)
-
         self.total_width = self.button1.width() + self.button2.width() + self.button3.width()
         self.total_height = self.button1.height()
         self.resize(self.total_width, self.total_height)
 
 class ImageApp(QWidget):
- 
     def __init__(self):
         super().__init__()
-        self.title = 'PyQt5 image - pythonspot.com'
-        self.left = 10
-        self.top = 10
-        self.width = 640
-        self.height = 480
-        self.initUI()
- 
-    def initUI(self):
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
-        
-        # Create widget
         self.label = QLabel(self)
 
         qimage = QImage(np.zeros((512,512,3),dtype=np.uint8), 512, 512,
                         QImage.Format_RGB888)
-
         self.pixmap = QPixmap(qimage)
         self.label.setPixmap(self.pixmap)
-        self.label.setAlignment(Qt.AlignHCenter)
-        self.resize(self.pixmap.width(),self.pixmap.height())
-        
-        self.show()
- 
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.label, 1, Qt.AlignHCenter)
+        self.setLayout(layout)
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MainWindow()
