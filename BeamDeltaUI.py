@@ -27,10 +27,10 @@ import numpy as np
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, parent=None):
+    def __init__(self, imager1, imager2, parent=None):
 
         super().__init__(parent)
-        self.form_widget = MainWidget(self)
+        self.form_widget = MainWidget(self, imager1, imager2)
         self.setCentralWidget(self.form_widget)
         self.resize(self.form_widget.width()+100, self.form_widget.height()+100)
         self.show_flag = True
@@ -41,12 +41,12 @@ class MainWindow(QMainWindow):
 
 class MainWidget(QWidget):
 
-    def __init__(self, parent):
+    def __init__(self, parent, imager1, imager2):
         super().__init__(parent)
         layout = QHBoxLayout(self)
 
-        self.camera1 = CamInterfaceApp(self)
-        self.camera2 = CamInterfaceApp(self)
+        self.camera1 = CamInterfaceApp(self, imager1)
+        self.camera2 = CamInterfaceApp(self, imager2)
 
         layout.addWidget(self.camera1)
         layout.addWidget(self.camera2)
@@ -59,9 +59,12 @@ class MainWidget(QWidget):
 
 class CamInterfaceApp(QWidget):
 
-    def __init__(self, parent):
+    def __init__(self, parent, imager):
         super().__init__(parent)
         self.live_flag = True
+        self.imager = None
+        self.colimage = None
+        self.setImager(imager)
 
         self.camera = ImageApp()
         self.buttons = ToggleButtonApp()
@@ -75,6 +78,29 @@ class CamInterfaceApp(QWidget):
         self.app_width = min(self.camera.pixmap.width(),self.buttons.width())
         self.app_height = self.camera.pixmap.height() + 125
         self.resize(self.app_width,self.app_height)
+
+    def setImager(self,imager):
+        self.imager = imager
+        data, timestamp = self.imager.trigger_and_wait()
+        data = np.array(data)
+        self.colimage = np.zeros((data.shape[0], data.shape[1], 3), dtype=np.uint8)
+        self.colimage[:, :, 0] = data
+        self.colimage[:, :, 1] = self.colimage[:, :, 0]
+        self.colimage[:, :, 2] = self.colimage[:, :, 0]
+
+    def updateImage(self):
+        if self.live_flag:
+            data, timestamp = self.imager.trigger_and_wait()
+            self.colimage[:, :, 0] = np.array(data)
+            self.colimage[:, :, 1] = self.colimage[:, :, 0]
+            self.colimage[:, :, 2] = self.colimage[:, :, 0]
+            qimage = QImage(self.colimage, self.colimage.shape[1], self.colimage.shape[0],
+                         QImage.Format_RGB888)
+
+            self.camera.pixmap = QPixmap(qimage)
+            self.camera.label.setPixmap(self.camera.pixmap)
+        else:
+            pass
 
     @pyqtSlot()
     def toggleLiveImage(self):
@@ -117,42 +143,21 @@ class ImageApp(QWidget):
 
 
 if __name__ == '__main__':
+    top_camera = clients.DataClient('PYRO:TestCamera@127.0.0.1:8000')
+    top_camera.enable()
+    top_camera.set_exposure_time(0.15)
+
+    bottom_camera = clients.DataClient('PYRO:TestCamera@127.0.0.1:8001')
+    bottom_camera.enable()
+    bottom_camera.set_exposure_time(0.15)
+
     app = QApplication(sys.argv)
-    ex = MainWindow()
-
-    camera1 = clients.DataClient('PYRO:TestCamera@127.0.0.1:8000')
-    camera1.enable()
-    camera1.set_exposure_time(0.15)
-    colimage1=np.zeros((512,512,3),dtype=np.uint8)
-
-    camera2 = clients.DataClient('PYRO:TestCamera@127.0.0.1:8001')
-    camera2.enable()
-    camera2.set_exposure_time(0.15)
-    colimage2 = np.zeros((512, 512, 3), dtype=np.uint8)
+    ex = MainWindow(imager1=top_camera, imager2=bottom_camera)
 
     running = True
     while(running):
-        data1,timestamp1=camera1.trigger_and_wait()
-        colimage1[:,:,0]=np.array(data1)
-        colimage1[:,:,1]=colimage1[:,:,0]
-        colimage1[:,:,2]=colimage1[:,:,0]
-        qimage1 = QImage(colimage1, colimage1.shape[1], colimage1.shape[0],
-                        QImage.Format_RGB888)
-
-        data2, timestamp2 = camera2.trigger_and_wait()
-        colimage2[:, :, 0] = np.array(data2)
-        colimage2[:, :, 1] = colimage2[:, :, 0]
-        colimage2[:, :, 2] = colimage2[:, :, 0]
-        qimage2 = QImage(colimage2, colimage2.shape[1], colimage2.shape[0],
-                         QImage.Format_RGB888)
-
-        if ex.form_widget.camera1.live_flag:
-            ex.form_widget.camera1.camera.pixmap = QPixmap(qimage1)
-        ex.form_widget.camera1.camera.label.setPixmap(ex.form_widget.camera1.camera.pixmap)
-
-        if ex.form_widget.camera2.live_flag:
-            ex.form_widget.camera2.camera.pixmap = QPixmap(qimage2)
-        ex.form_widget.camera2.camera.label.setPixmap(ex.form_widget.camera2.camera.pixmap)
+        ex.form_widget.camera1.updateImage()
+        ex.form_widget.camera2.updateImage()
 
         app.processEvents()
 
