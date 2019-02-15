@@ -20,7 +20,7 @@
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSlot
 import sys
 from microscope import clients
 import numpy as np
@@ -61,9 +61,11 @@ class CamInterfaceApp(QWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.live_flag = True
 
         self.camera = ImageApp()
         self.buttons = ToggleButtonApp()
+        self.buttons.live_button.clicked.connect(self.toggleLiveImage)
 
         layout = QVBoxLayout()
         layout.addWidget(self.camera)
@@ -74,23 +76,29 @@ class CamInterfaceApp(QWidget):
         self.app_height = self.camera.pixmap.height() + 125
         self.resize(self.app_width,self.app_height)
 
+    @pyqtSlot()
+    def toggleLiveImage(self):
+        self.live_flag = not(self.live_flag)
+
 class ToggleButtonApp(QWidget):
 
     def __init__(self):
         super().__init__()
         layout = QHBoxLayout(self)
 
-        self.button1 = QPushButton("Live Image")
-        self.button2 = QPushButton("Alignment Centroid")
-        self.button3 = QPushButton("CurrentCentroid")
+        self.live_button = QPushButton("Live Image")
 
-        layout.addWidget(self.button1)
-        layout.addWidget(self.button2)
-        layout.addWidget(self.button3)
+        self.align_cent_button = QPushButton("Alignment Centroid")
+        self.curr_cent_button = QPushButton("CurrentCentroid")
+
+        layout.addWidget(self.live_button)
+        layout.addWidget(self.align_cent_button)
+        layout.addWidget(self.curr_cent_button)
         self.setLayout(layout)
 
-        self.total_width = self.button1.width() + self.button2.width() + self.button3.width()
-        self.total_height = self.button1.height()
+        self.total_width = self.live_button.width() + self.align_cent_button.width() \
+                           + self.curr_cent_button.width()
+        self.total_height = self.live_button.height()
         self.resize(self.total_width, self.total_height)
 
 class ImageApp(QWidget):
@@ -138,15 +146,17 @@ if __name__ == '__main__':
         qimage2 = QImage(colimage2, colimage2.shape[1], colimage2.shape[0],
                          QImage.Format_RGB888)
 
-        ex.form_widget.camera1.camera.pixmap = QPixmap(qimage1)
-        ex.form_widget.camera2.camera.pixmap = QPixmap(qimage2)
+        if ex.form_widget.camera1.live_flag:
+            ex.form_widget.camera1.camera.pixmap = QPixmap(qimage1)
         ex.form_widget.camera1.camera.label.setPixmap(ex.form_widget.camera1.camera.pixmap)
+
+        if ex.form_widget.camera2.live_flag:
+            ex.form_widget.camera2.camera.pixmap = QPixmap(qimage2)
         ex.form_widget.camera2.camera.label.setPixmap(ex.form_widget.camera2.camera.pixmap)
 
         app.processEvents()
-        
+
         if ex.show_flag:
             ex.show()
         else:
             running = False
-    sys.exit(app.exec_())
