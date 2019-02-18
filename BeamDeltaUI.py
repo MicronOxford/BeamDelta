@@ -19,11 +19,13 @@
 ## along with BeamDeltaCOPYING.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen
 from PyQt5.QtCore import Qt, pyqtSlot
 import sys
 from microscope import clients
 import numpy as np
+from skimage.filters import threshold_otsu
+from scipy.ndimage.measurements import center_of_mass
 
 class MainWindow(QMainWindow):
 
@@ -56,12 +58,23 @@ class MainWidget(QWidget):
         self.main_height = max(self.camera1.height(), self.camera2.height())
         self.resize(self.main_width, self.main_height)
 
-
 class CamInterfaceApp(QWidget):
 
     def __init__(self, parent, imager):
         super().__init__(parent)
+        self.mid_x = None
+        self.mid_y = None
+        self.arm_length = None
         self.live_flag = True
+
+        self.align_cent_flag = False
+        self.x_alig_cent = None
+        self.y_alig_cent = None
+
+        self.curr_cent_flag = False
+        self.x_cur_cent = None
+        self.y_cur_cent = None
+
         self.imager = None
         self.colimage = None
         self.setImager(imager)
@@ -69,6 +82,8 @@ class CamInterfaceApp(QWidget):
         self.camera = ImageApp()
         self.buttons = ToggleButtonApp()
         self.buttons.live_button.clicked.connect(self.toggleLiveImage)
+        self.buttons.align_cent_button.clicked.connect(self.toggleAlignCent)
+        self.buttons.curr_cent_button.clicked.connect(self.toggleCurrCent)
 
         layout = QVBoxLayout()
         layout.addWidget(self.camera)
@@ -90,21 +105,119 @@ class CamInterfaceApp(QWidget):
 
     def updateImage(self):
         if self.live_flag:
+            #Collect live image
             data, timestamp = self.imager.trigger_and_wait()
             self.colimage[:, :, 0] = np.array(data)
             self.colimage[:, :, 1] = self.colimage[:, :, 0]
             self.colimage[:, :, 2] = self.colimage[:, :, 0]
-            qimage = QImage(self.colimage, self.colimage.shape[1], self.colimage.shape[0],
-                         QImage.Format_RGB888)
 
+            # Check if alignment centroid should be shown
+            if self.align_cent_flag:
+                # If alignment centroid position has been calculated, use that
+                if self.x_alig_cent is not None:
+                    align_y = int(np.round(self.y_alig_cent))
+                    align_x = int(np.round(self.x_alig_cent))
+                    self.arm_length = int(self.colimage.shape[1] * 0.05)
+                # Calculate position of alignment centroid
+                else:
+                    self.calcCurCentroid(data)
+                    self.x_alig_cent = self.x_cur_cent
+                    self.y_alig_cent = self.y_cur_cent
+                    align_y = int(np.round(self.y_alig_cent))
+                    align_x = int(np.round(self.x_alig_cent))
+                    self.arm_length = int(self.colimage.shape[1] * 0.05)
+
+                self.colimage[align_y - self.arm_length:align_y + self.arm_length, align_x, 0] = np.max(data)
+                self.colimage[align_y, align_x - self.arm_length:align_x + self.arm_length, 0] = np.max(data)
+
+            # Check if current centroid should be shown
+            if self.curr_cent_flag:
+                self.calcCurCentroid(data)
+                curr_y = int(np.round(self.x_cur_cent))
+                curr_x = int(np.round(self.x_cur_cent))
+
+                self.colimage[curr_y - self.arm_length:curr_y + self.arm_length, curr_x, 1] = np.max(data)
+                self.colimage[curr_y, curr_x - self.arm_length:curr_x + self.arm_length, 1] = np.max(data)
+
+            # Set current image (with any crosshairs) as current frame
+            qimage = QImage(self.colimage, self.colimage.shape[1], self.colimage.shape[0],
+                            QImage.Format_RGB888)
             self.camera.pixmap = QPixmap(qimage)
             self.camera.label.setPixmap(self.camera.pixmap)
+
+            # Reset values overwritten by crosshairs
+            self.colimage[:, :, 0] = np.array(data)
+            self.colimage[:, :, 1] = self.colimage[:, :, 0]
+            self.colimage[:, :, 2] = self.colimage[:, :, 0]
         else:
+            # Copy last collected image as current frame
+            paused_image = self.colimage.copy()
+
+            # Check if alignment centroid should be shown
+            if self.align_cent_flag:
+                # If alignment centroid position has been calculated, use that
+                if self.x_alig_cent is not None:
+                    align_y = int(np.round(self.y_alig_cent))
+                    align_x = int(np.round(self.x_alig_cent))
+                    self.arm_length = int(self.colimage.shape[1] * 0.05)
+                # Calculate position of alignment centroid
+                else:
+                    self.calcCurCentroid(self.colimage[:,:,0])
+                    self.x_alig_cent = self.x_cur_cent
+                    self.y_alig_cent = self.y_cur_cent
+                    align_y = int(np.round(self.y_alig_cent))
+                    align_x = int(np.round(self.x_alig_cent))
+                    self.arm_length = int(self.colimage.shape[1] * 0.05)
+
+                paused_image[align_y-self.arm_length:align_y+self.arm_length, align_x, 0] = np.max(
+                    paused_image[:,:,0])
+                paused_image[align_y, align_x-self.arm_length:align_x+self.arm_length, 0] = np.max(
+                    paused_image[:, :, 0])
+
+            # Check if current centroid should be shown
+            if self.curr_cent_flag:
+                self.calcCurCentroid(self.colimage[:, :, 0])
+                curr_y = int(np.round(self.x_cur_cent))
+                curr_x = int(np.round(self.x_cur_cent))
+
+                paused_image[curr_y - self.arm_length:curr_y + self.arm_length, curr_x, 1] = np.max(
+                    paused_image[:,:,2])
+                paused_image[curr_y, curr_x - self.arm_length:curr_x + self.arm_length, 1] = np.max(
+                    paused_image[:,:,2])
+
+            # Set current image (with any crosshairs) as current frame
+            qimage = QImage(paused_image, paused_image.shape[1], paused_image.shape[0],
+                            QImage.Format_RGB888)
+            self.camera.pixmap = QPixmap(qimage)
+            self.camera.label.setPixmap(self.camera.pixmap)
+
+    def calcCurCentroid(self, image):
+        thresh = threshold_otsu(image)
+        binaryIm = image > thresh
+        imageOtsu = image * binaryIm
+
+        self.y_cur_cent, self.x_cur_cent = center_of_mass(imageOtsu[10:-10, 10:-10])
+
+        if self.y_alig_cent == None or self.x_alig_cent == None:
             pass
+        else:
+            self.diff_y = self.y_cur_cent - self.y_alig_cent
+            self.diff_x = self.x_cur_cent - self.x_alig_cent
+            totaldist = (self.diff_y**2+self.diff_x**2)**0.5
 
     @pyqtSlot()
     def toggleLiveImage(self):
         self.live_flag = not(self.live_flag)
+
+    @pyqtSlot()
+    def toggleAlignCent(self):
+        self.x_alig_cent = None
+        self.y_alig_cent = None
+        self.align_cent_flag = not(self.align_cent_flag)
+
+    @pyqtSlot()
+    def toggleCurrCent(self):
+        self.curr_cent_flag = not (self.curr_cent_flag)
 
 class ToggleButtonApp(QWidget):
 
@@ -114,8 +227,8 @@ class ToggleButtonApp(QWidget):
 
         self.live_button = QPushButton("Live Image")
 
-        self.align_cent_button = QPushButton("Alignment Centroid")
-        self.curr_cent_button = QPushButton("CurrentCentroid")
+        self.align_cent_button = QPushButton("Show Alignment Centroid")
+        self.curr_cent_button = QPushButton("Show Current Centroid")
 
         layout.addWidget(self.live_button)
         layout.addWidget(self.align_cent_button)
