@@ -213,7 +213,7 @@ class CamInterfaceApp(QWidget):
 
         self.y_cur_cent, self.x_cur_cent = center_of_mass(imageOtsu[10:-10, 10:-10])
 
-        if self.y_alig_cent == None or self.x_alig_cent == None:
+        if self.y_alig_cent is None or self.x_alig_cent is None:
             self.diff_x = None
             self.diff_y = None
         else:
