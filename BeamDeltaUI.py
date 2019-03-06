@@ -18,10 +18,11 @@
 ## You should have received a copy of the GNU General Public License
 ## along with BeamDeltaCOPYING.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen
 from PyQt5.QtCore import Qt, pyqtSlot
-import sys
 from microscope import clients
 import numpy as np
 from skimage.filters import threshold_otsu
@@ -274,7 +275,7 @@ class ImageApp(QWidget):
         self.setLayout(layout)
 
 
-if __name__ == '__main__':
+def main(argv):
     top_camera = clients.DataClient('PYRO:TestCamera@127.0.0.1:8000')
     top_camera.enable()
     top_camera.set_exposure_time(0.15)
@@ -283,7 +284,7 @@ if __name__ == '__main__':
     bottom_camera.enable()
     bottom_camera.set_exposure_time(0.15)
 
-    app = QApplication(sys.argv)
+    app = QApplication(argv)
     ex = MainWindow(imager1=top_camera, imager2=bottom_camera)
 
     running = True
@@ -297,3 +298,7 @@ if __name__ == '__main__':
             ex.show()
         else:
             running = False
+
+
+if __name__ == '__main__':
+    main(sys.argv)
