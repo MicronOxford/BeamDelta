@@ -187,7 +187,7 @@ class CamInterfaceApp(QWidget):
 
     @pyqtSlot()
     def toggleLiveImage(self):
-        self.live_flag = not(self.live_flag)
+        self.live_flag = not self.live_flag
 
     @pyqtSlot()
     def toggleAlignCent(self):
@@ -195,13 +195,13 @@ class CamInterfaceApp(QWidget):
         self.y_alig_cent = None
         self.diff_x = None
         self.diff_y = None
-        self.align_cent_flag = not(self.align_cent_flag)
+        self.align_cent_flag = not self.align_cent_flag
 
     @pyqtSlot()
     def toggleCurrCent(self):
         self.diff_x = None
         self.diff_y = None
-        self.curr_cent_flag = not (self.curr_cent_flag)
+        self.curr_cent_flag = not self.curr_cent_flag
 
 class ToggleButtonApp(QWidget):
 
