@@ -193,7 +193,6 @@ class CamInterfaceApp(QWidget):
         else:
             self.diff_y = self.y_cur_cent - self.y_alig_cent
             self.diff_x = self.x_cur_cent - self.x_alig_cent
-            totaldist = (self.diff_y**2+self.diff_x**2)**0.5
 
     @pyqtSlot()
     def toggleLiveImage(self):
