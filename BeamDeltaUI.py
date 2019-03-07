@@ -21,7 +21,8 @@
 import argparse
 import sys
 
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QMainWindow,
+                             QPushButton, QVBoxLayout, QWidget)
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen
 from PyQt5.QtCore import Qt, pyqtSlot, QTimer
 from microscope import clients
