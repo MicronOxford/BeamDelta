@@ -18,6 +18,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with BeamDeltaCOPYING.  If not, see <http://www.gnu.org/licenses/>.
 
+import argparse
 import sys
 
 from PyQt5.QtWidgets import *
@@ -246,13 +247,25 @@ class ImageApp(QWidget):
 
 
 def main(argv):
-    top_camera = clients.DataClient('PYRO:TestCamera@127.0.0.1:8000')
-    top_camera.enable()
-    top_camera.set_exposure_time(0.15)
+    parser = argparse.ArgumentParser(prog='BeamDelta')
+    parser.add_argument('--exposure-time', metavar='exposure_time',
+                        action='store', type=float, default=0.15,
+                        help='exposure time for both cameras')
+    parser.add_argument('cam1_uri', metavar='cam1_uri',
+                        action='store', type=str,
+                        help='URI for camera #1')
+    parser.add_argument('cam2_uri', metavar='cam2_uri',
+                        action='store', type=str,
+                        help='URI for camera #2')
+    args = parser.parse_args(argv[1:])
 
-    bottom_camera = clients.DataClient('PYRO:TestCamera@127.0.0.1:8001')
+    top_camera = clients.DataClient(args.cam1_uri)
+    top_camera.enable()
+    top_camera.set_exposure_time(args.exposure_time)
+
+    bottom_camera = clients.DataClient(args.cam2_uri)
     bottom_camera.enable()
-    bottom_camera.set_exposure_time(0.15)
+    bottom_camera.set_exposure_time(args.exposure_time)
 
     app = QApplication(argv)
     ex = MainWindow(imager1=top_camera, imager2=bottom_camera)
