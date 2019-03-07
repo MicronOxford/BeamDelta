@@ -23,29 +23,21 @@ import sys
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QPen
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot, QTimer
 from microscope import clients
 import numpy as np
 from skimage.filters import threshold_otsu
 from scipy.ndimage.measurements import center_of_mass
 
 class MainWindow(QMainWindow):
-
     def __init__(self, imager1, imager2, parent=None):
-
         super().__init__(parent)
         self.form_widget = MainWidget(self, imager1, imager2)
         self.setCentralWidget(self.form_widget)
         self.resize(self.form_widget.width()+100, self.form_widget.height()+100)
-        self.show_flag = True
         self.setWindowTitle("Beam Delta")
 
-    def closeEvent(self, event):
-        self.show_flag = False
-        super().closeEvent(event)
-
 class MainWidget(QWidget):
-
     def __init__(self, parent, imager1, imager2):
         super().__init__(parent)
         layout = QHBoxLayout(self)
@@ -60,6 +52,14 @@ class MainWidget(QWidget):
         self.main_width = self.camera1.width() + self.camera2.width()
         self.main_height = max(self.camera1.height(), self.camera2.height())
         self.resize(self.main_width, self.main_height)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.updateImages)
+        self.timer.start()
+
+    def updateImages(self):
+        self.camera1.updateImage()
+        self.camera2.updateImage()
 
 class CamInterfaceApp(QWidget):
 
@@ -269,18 +269,8 @@ def main(argv):
 
     app = QApplication(argv)
     ex = MainWindow(imager1=top_camera, imager2=bottom_camera)
-
-    running = True
-    while(running):
-        ex.form_widget.camera1.updateImage()
-        ex.form_widget.camera2.updateImage()
-
-        app.processEvents()
-
-        if ex.show_flag:
-            ex.show()
-        else:
-            running = False
+    ex.show()
+    return app.exec()
 
 
 if __name__ == '__main__':
