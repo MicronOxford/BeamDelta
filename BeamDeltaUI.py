@@ -31,6 +31,16 @@ from skimage.filters import threshold_otsu
 from scipy.ndimage.measurements import center_of_mass
 
 
+class Imager:
+    def __init__(self, uri, exposure):
+        self._client = clients.DataClient(uri)
+        self._client.enable()
+        self._client.set_exposure_time(exposure)
+
+    def acquire(self):
+        return self._client.trigger_and_wait()[0]
+
+
 class MainWindow(QMainWindow):
     def __init__(self, imager1, imager2, parent=None):
         super().__init__(parent)
@@ -107,7 +117,7 @@ class CamInterfaceApp(QWidget):
 
     def setImager(self, imager):
         self.imager = imager
-        data, timestamp = self.imager.trigger_and_wait()
+        data = self.imager.acquire()
         data = np.array(data)
         self.colimage = np.zeros((data.shape[0], data.shape[1], 3), dtype=np.uint8)
         self.colimage[:, :, 0] = data
@@ -117,7 +127,7 @@ class CamInterfaceApp(QWidget):
     def updateImage(self):
         if self.live_flag:
             #Collect live image
-            data, timestamp = self.imager.trigger_and_wait()
+            data = self.imager.acquire()
             self.colimage[:, :, 0] = np.array(data)
             self.colimage[:, :, 1] = self.colimage[:, :, 0]
             self.colimage[:, :, 2] = self.colimage[:, :, 0]
@@ -269,13 +279,6 @@ def parse_arguments(arguments):
     return parser.parse_args(arguments[1:])
 
 
-def setup_camera(uri, exposure):
-    cam = clients.DataClient(uri)
-    cam.enable()
-    cam.set_exposure_time(exposure)
-    return cam
-
-
 def main(argv):
     app = QApplication(argv)
     app.setApplicationName('BeamDelta')
@@ -284,8 +287,8 @@ def main(argv):
 
     args = parse_arguments(app.arguments())
 
-    cam1 = setup_camera(args.cam1_uri, args.exposure_time)
-    cam2 = setup_camera(args.cam2_uri, args.exposure_time)
+    cam1 = Imager(args.cam1_uri, args.exposure_time)
+    cam2 = Imager(args.cam2_uri, args.exposure_time)
 
     window = MainWindow(imager1=cam1, imager2=cam2)
     window.show()
