@@ -150,14 +150,7 @@ class CamInterfaceApp(QWidget):
             self.x_alig_cent = self.x_cur_cent
             self.y_alig_cent = self.y_cur_cent
 
-        align_y = int(np.round(self.y_alig_cent))
-        align_x = int(np.round(self.x_alig_cent))
-        self.arm_length = int(self.colimage.shape[1] * 0.05)
-
-        image[align_y-self.arm_length:align_y+self.arm_length, align_x, 0] = np.max(
-            image[:,:,0])
-        image[align_y, align_x-self.arm_length:align_x+self.arm_length, 0] = np.max(
-            image[:, :, 0])
+        self.drawCrosshairs(image, self.x_alig_cent, self.y_alig_cent, 0)
 
     def updateCurrentCentroid(self, image):
         """Check if should be shown and update current centroid"""
@@ -165,14 +158,7 @@ class CamInterfaceApp(QWidget):
             return
 
         self.calcCurCentroid(image[:, :, 0])
-        curr_y = int(np.round(self.x_cur_cent))
-        curr_x = int(np.round(self.x_cur_cent))
-        self.arm_length = int(self.colimage.shape[1] * 0.05)
-
-        image[curr_y - self.arm_length:curr_y + self.arm_length, curr_x, 1] = np.max(
-            image[:,:,2])
-        image[curr_y, curr_x - self.arm_length:curr_x + self.arm_length, 1] = np.max(
-            image[:,:,2])
+        self.drawCrosshairs(image, self.x_cur_cent, self.y_cur_cent, 1)
 
     def setCurrentImage(self, image):
         """Set current image (with any crosshairs) as current frame"""
@@ -180,6 +166,15 @@ class CamInterfaceApp(QWidget):
                         QImage.Format_RGB888)
         self.camera.pixmap = QPixmap(qimage)
         self.camera.label.setPixmap(self.camera.pixmap)
+
+    def drawCrosshairs(self, image, x, y, channel):
+        x = int(np.round(x))
+        y = int(np.round(y))
+        length = int(image.shape[1] * 0.05)
+
+        val = np.iinfo(image.dtype).max
+        image[y-length : y+length, x, channel] = val
+        image[y, x-length : x+length, channel] = val
 
     def calcCurCentroid(self, image):
         thresh = threshold_otsu(image)
