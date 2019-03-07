@@ -120,17 +120,7 @@ class CamInterfaceApp(QWidget):
             self.colimage[:, :, 2] = self.colimage[:, :, 0]
 
             self.updateAlignmentCentroid(self.colimage)
-
-            # Check if current centroid should be shown
-            if self.curr_cent_flag:
-                self.calcCurCentroid(data)
-                curr_y = int(np.round(self.x_cur_cent))
-                curr_x = int(np.round(self.x_cur_cent))
-                self.arm_length = int(self.colimage.shape[1] * 0.05)
-
-                self.colimage[curr_y - self.arm_length:curr_y + self.arm_length, curr_x, 1] = np.max(data)
-                self.colimage[curr_y, curr_x - self.arm_length:curr_x + self.arm_length, 1] = np.max(data)
-
+            self.updateCurrentCentroid(self.colimage)
             self.setCurrentImage(self.colimage)
 
             # Reset values overwritten by crosshairs
@@ -141,19 +131,7 @@ class CamInterfaceApp(QWidget):
             # Copy last collected image as current frame
             paused_image = self.colimage.copy()
             self.updateAlignmentCentroid(paused_image)
-
-            # Check if current centroid should be shown
-            if self.curr_cent_flag:
-                self.calcCurCentroid(self.colimage[:, :, 0])
-                curr_y = int(np.round(self.x_cur_cent))
-                curr_x = int(np.round(self.x_cur_cent))
-                self.arm_length = int(self.colimage.shape[1] * 0.05)
-
-                paused_image[curr_y - self.arm_length:curr_y + self.arm_length, curr_x, 1] = np.max(
-                    paused_image[:,:,2])
-                paused_image[curr_y, curr_x - self.arm_length:curr_x + self.arm_length, 1] = np.max(
-                    paused_image[:,:,2])
-
+            self.updateCurrentCentroid(paused_image)
             self.setCurrentImage(paused_image)
 
         if self.diff_y is None:
@@ -181,6 +159,20 @@ class CamInterfaceApp(QWidget):
         image[align_y, align_x-self.arm_length:align_x+self.arm_length, 0] = np.max(
             image[:, :, 0])
 
+    def updateCurrentCentroid(self, image):
+        """Check if should be shown and update current centroid"""
+        if not self.curr_cent_flag:
+            return
+
+        self.calcCurCentroid(image[:, :, 0])
+        curr_y = int(np.round(self.x_cur_cent))
+        curr_x = int(np.round(self.x_cur_cent))
+        self.arm_length = int(self.colimage.shape[1] * 0.05)
+
+        image[curr_y - self.arm_length:curr_y + self.arm_length, curr_x, 1] = np.max(
+            image[:,:,2])
+        image[curr_y, curr_x - self.arm_length:curr_x + self.arm_length, 1] = np.max(
+            image[:,:,2])
 
     def setCurrentImage(self, image):
         """Set current image (with any crosshairs) as current frame"""
