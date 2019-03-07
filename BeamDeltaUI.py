@@ -119,24 +119,7 @@ class CamInterfaceApp(QWidget):
             self.colimage[:, :, 1] = self.colimage[:, :, 0]
             self.colimage[:, :, 2] = self.colimage[:, :, 0]
 
-            # Check if alignment centroid should be shown
-            if self.align_cent_flag:
-                # If alignment centroid position has been calculated, use that
-                if self.x_alig_cent is not None:
-                    align_y = int(np.round(self.y_alig_cent))
-                    align_x = int(np.round(self.x_alig_cent))
-                    self.arm_length = int(self.colimage.shape[1] * 0.05)
-                # Calculate position of alignment centroid
-                else:
-                    self.calcCurCentroid(data)
-                    self.x_alig_cent = self.x_cur_cent
-                    self.y_alig_cent = self.y_cur_cent
-                    align_y = int(np.round(self.y_alig_cent))
-                    align_x = int(np.round(self.x_alig_cent))
-                    self.arm_length = int(self.colimage.shape[1] * 0.05)
-
-                self.colimage[align_y - self.arm_length:align_y + self.arm_length, align_x, 0] = np.max(data)
-                self.colimage[align_y, align_x - self.arm_length:align_x + self.arm_length, 0] = np.max(data)
+            self.updateAlignmentCentroid(self.colimage)
 
             # Check if current centroid should be shown
             if self.curr_cent_flag:
@@ -157,27 +140,7 @@ class CamInterfaceApp(QWidget):
         else:
             # Copy last collected image as current frame
             paused_image = self.colimage.copy()
-
-            # Check if alignment centroid should be shown
-            if self.align_cent_flag:
-                # If alignment centroid position has been calculated, use that
-                if self.x_alig_cent is not None:
-                    align_y = int(np.round(self.y_alig_cent))
-                    align_x = int(np.round(self.x_alig_cent))
-                    self.arm_length = int(self.colimage.shape[1] * 0.05)
-                # Calculate position of alignment centroid
-                else:
-                    self.calcCurCentroid(self.colimage[:,:,0])
-                    self.x_alig_cent = self.x_cur_cent
-                    self.y_alig_cent = self.y_cur_cent
-                    align_y = int(np.round(self.y_alig_cent))
-                    align_x = int(np.round(self.x_alig_cent))
-                    self.arm_length = int(self.colimage.shape[1] * 0.05)
-
-                paused_image[align_y-self.arm_length:align_y+self.arm_length, align_x, 0] = np.max(
-                    paused_image[:,:,0])
-                paused_image[align_y, align_x-self.arm_length:align_x+self.arm_length, 0] = np.max(
-                    paused_image[:, :, 0])
+            self.updateAlignmentCentroid(paused_image)
 
             # Check if current centroid should be shown
             if self.curr_cent_flag:
@@ -197,6 +160,30 @@ class CamInterfaceApp(QWidget):
             self.text.setText("X distance = N/A, Y distance = N/A")
         else:
             self.text.setText("X distance = %f, Y distance = %f" % (self.diff_x, self.diff_y))
+
+    def updateAlignmentCentroid(self, image):
+        """Check if should be shown and update alignment centroid"""
+        if not self.align_cent_flag:
+            return
+
+        # If alignment centroid position has been calculated, use that
+        if self.x_alig_cent is not None:
+            align_y = int(np.round(self.y_alig_cent))
+            align_x = int(np.round(self.x_alig_cent))
+            self.arm_length = int(self.colimage.shape[1] * 0.05)
+        else: # Calculate position of alignment centroid
+            self.calcCurCentroid(image[:,:,0])
+            self.x_alig_cent = self.x_cur_cent
+            self.y_alig_cent = self.y_cur_cent
+            align_y = int(np.round(self.y_alig_cent))
+            align_x = int(np.round(self.x_alig_cent))
+            self.arm_length = int(self.colimage.shape[1] * 0.05)
+
+        image[align_y-self.arm_length:align_y+self.arm_length, align_x, 0] = np.max(
+            image[:,:,0])
+        image[align_y, align_x-self.arm_length:align_x+self.arm_length, 0] = np.max(
+            image[:, :, 0])
+
 
     def setCurrentImage(self, image):
         """Set current image (with any crosshairs) as current frame"""
