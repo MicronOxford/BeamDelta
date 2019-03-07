@@ -30,13 +30,14 @@ import numpy as np
 from skimage.filters import threshold_otsu
 from scipy.ndimage.measurements import center_of_mass
 
+
 class MainWindow(QMainWindow):
     def __init__(self, imager1, imager2, parent=None):
         super().__init__(parent)
         self.form_widget = MainWidget(self, imager1, imager2)
         self.setCentralWidget(self.form_widget)
         self.resize(self.form_widget.width()+100, self.form_widget.height()+100)
-        self.setWindowTitle("Beam Delta")
+
 
 class MainWidget(QWidget):
     def __init__(self, parent, imager1, imager2):
@@ -247,30 +248,45 @@ class ImageApp(QWidget):
         self.setLayout(layout)
 
 
-def main(argv):
+def parse_arguments(arguments):
+    """Parse command line arguments.
+
+    This is the list of arguments from :class:`QApplication`.  This is
+    important so that Qt can filter out its own command line options.
+
+    """
     parser = argparse.ArgumentParser(prog='BeamDelta')
-    parser.add_argument('--exposure-time', metavar='exposure_time',
+    parser.add_argument('--exposure-time', dest='exposure_time',
                         action='store', type=float, default=0.15,
+                        metavar='EXPOSURE-TIME',
                         help='exposure time for both cameras')
-    parser.add_argument('cam1_uri', metavar='cam1_uri',
-                        action='store', type=str,
-                        help='URI for camera #1')
-    parser.add_argument('cam2_uri', metavar='cam2_uri',
-                        action='store', type=str,
-                        help='URI for camera #2')
-    args = parser.parse_args(argv[1:])
+    parser.add_argument('cam1_uri', action='store', type=str,
+                        metavar='CAM1-URI', help='URI for camera #1')
+    parser.add_argument('cam2_uri', action='store', type=str,
+                        metavar='CAM2-URI', help='URI for camera #2')
+    return parser.parse_args(arguments[1:])
 
-    top_camera = clients.DataClient(args.cam1_uri)
-    top_camera.enable()
-    top_camera.set_exposure_time(args.exposure_time)
 
-    bottom_camera = clients.DataClient(args.cam2_uri)
-    bottom_camera.enable()
-    bottom_camera.set_exposure_time(args.exposure_time)
+def setup_camera(uri, exposure):
+    cam = clients.DataClient(uri)
+    cam.enable()
+    cam.set_exposure_time(exposure)
+    return cam
 
+
+def main(argv):
     app = QApplication(argv)
-    ex = MainWindow(imager1=top_camera, imager2=bottom_camera)
-    ex.show()
+    app.setApplicationName('BeamDelta')
+    app.setOrganizationName('Micron Oxford')
+    app.setOrganizationDomain('micron.ox.ac.uk')
+
+    args = parse_arguments(app.arguments())
+
+    cam1 = setup_camera(args.cam1_uri, args.exposure_time)
+    cam2 = setup_camera(args.cam2_uri, args.exposure_time)
+
+    window = MainWindow(imager1=cam1, imager2=cam2)
+    window.show()
     return app.exec()
 
 
