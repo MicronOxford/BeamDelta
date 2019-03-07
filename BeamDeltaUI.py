@@ -166,18 +166,15 @@ class CamInterfaceApp(QWidget):
         if not self.align_cent_flag:
             return
 
-        # If alignment centroid position has been calculated, use that
-        if self.x_alig_cent is not None:
-            align_y = int(np.round(self.y_alig_cent))
-            align_x = int(np.round(self.x_alig_cent))
-            self.arm_length = int(self.colimage.shape[1] * 0.05)
-        else: # Calculate position of alignment centroid
+        if self.x_alig_cent is None:
+            ## Calculate position of alignment centroid if not yet done
             self.calcCurCentroid(image[:,:,0])
             self.x_alig_cent = self.x_cur_cent
             self.y_alig_cent = self.y_cur_cent
-            align_y = int(np.round(self.y_alig_cent))
-            align_x = int(np.round(self.x_alig_cent))
-            self.arm_length = int(self.colimage.shape[1] * 0.05)
+
+        align_y = int(np.round(self.y_alig_cent))
+        align_x = int(np.round(self.x_alig_cent))
+        self.arm_length = int(self.colimage.shape[1] * 0.05)
 
         image[align_y-self.arm_length:align_y+self.arm_length, align_x, 0] = np.max(
             image[:,:,0])
