@@ -148,11 +148,7 @@ class CamInterfaceApp(QWidget):
                 self.colimage[curr_y - self.arm_length:curr_y + self.arm_length, curr_x, 1] = np.max(data)
                 self.colimage[curr_y, curr_x - self.arm_length:curr_x + self.arm_length, 1] = np.max(data)
 
-            # Set current image (with any crosshairs) as current frame
-            qimage = QImage(self.colimage, self.colimage.shape[1], self.colimage.shape[0],
-                            QImage.Format_RGB888)
-            self.camera.pixmap = QPixmap(qimage)
-            self.camera.label.setPixmap(self.camera.pixmap)
+            self.setCurrentImage(self.colimage)
 
             # Reset values overwritten by crosshairs
             self.colimage[:, :, 0] = np.array(data)
@@ -195,16 +191,19 @@ class CamInterfaceApp(QWidget):
                 paused_image[curr_y, curr_x - self.arm_length:curr_x + self.arm_length, 1] = np.max(
                     paused_image[:,:,2])
 
-            # Set current image (with any crosshairs) as current frame
-            qimage = QImage(paused_image, paused_image.shape[1], paused_image.shape[0],
-                            QImage.Format_RGB888)
-            self.camera.pixmap = QPixmap(qimage)
-            self.camera.label.setPixmap(self.camera.pixmap)
+            self.setCurrentImage(paused_image)
 
         if self.diff_y is None:
             self.text.setText("X distance = N/A, Y distance = N/A")
         else:
             self.text.setText("X distance = %f, Y distance = %f" % (self.diff_x, self.diff_y))
+
+    def setCurrentImage(self, image):
+        """Set current image (with any crosshairs) as current frame"""
+        qimage = QImage(image, image.shape[1], image.shape[0],
+                        QImage.Format_RGB888)
+        self.camera.pixmap = QPixmap(qimage)
+        self.camera.label.setPixmap(self.camera.pixmap)
 
     def calcCurCentroid(self, image):
         thresh = threshold_otsu(image)
