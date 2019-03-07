@@ -101,11 +101,11 @@ class CamInterfaceApp(QWidget):
         layout.addWidget(self.text)
         self.setLayout(layout)
 
-        self.app_width = min(self.camera.pixmap.width(),self.buttons.width())
+        self.app_width = min(self.camera.pixmap.width(), self.buttons.width())
         self.app_height = self.camera.pixmap.height() + 125
-        self.resize(self.app_width,self.app_height)
+        self.resize(self.app_width, self.app_height)
 
-    def setImager(self,imager):
+    def setImager(self, imager):
         self.imager = imager
         data, timestamp = self.imager.trigger_and_wait()
         data = np.array(data)
@@ -149,7 +149,7 @@ class CamInterfaceApp(QWidget):
 
         if self.x_alig_cent is None:
             ## Calculate position of alignment centroid if not yet done
-            self.calcCurCentroid(image[:,:,0])
+            self.calcCurCentroid(image[:, :, 0])
             self.x_alig_cent = self.x_cur_cent
             self.y_alig_cent = self.y_cur_cent
 
@@ -219,8 +219,9 @@ class ToggleButtonApp(QWidget):
         layout.addWidget(self.curr_cent_button)
         self.setLayout(layout)
 
-        self.total_width = self.live_button.width() + self.align_cent_button.width() \
-                           + self.curr_cent_button.width()
+        self.total_width = (self.live_button.width()
+                            + self.align_cent_button.width()
+                            + self.curr_cent_button.width())
         self.total_height = self.live_button.height()
         self.resize(self.total_width, self.total_height)
 
@@ -229,7 +230,7 @@ class ImageApp(QWidget):
         super().__init__()
         self.label = QLabel(self)
 
-        qimage = QImage(np.zeros((512,512,3),dtype=np.uint8), 512, 512,
+        qimage = QImage(np.zeros((512, 512, 3), dtype=np.uint8), 512, 512,
                         QImage.Format_RGB888)
         self.pixmap = QPixmap(qimage)
         self.label.setPixmap(self.pixmap)
