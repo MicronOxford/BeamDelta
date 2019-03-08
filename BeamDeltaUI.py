@@ -23,8 +23,9 @@ import sys
 
 from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QMainWindow,
                              QPushButton, QVBoxLayout, QWidget)
-from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtCore import Qt, pyqtSlot, QTimer
+from PyQt5.QtGui import QImage, QPainter, QPixmap
+from PyQt5.QtCore import QSize, QTimer, Qt, pyqtSlot
+
 from microscope import clients
 import numpy as np
 from skimage.filters import threshold_otsu
@@ -36,6 +37,10 @@ class Imager:
         self._client = clients.DataClient(uri)
         self._client.enable()
         self._client.set_exposure_time(exposure)
+
+    def get_shape(self):
+        """Shape of images (width, height)"""
+        return self._client.get_sensor_shape()
 
     def acquire(self):
         return self._client.trigger_and_wait()[0]
@@ -51,11 +56,10 @@ class MainWindow(QMainWindow):
 class MainWidget(QWidget):
     def __init__(self, parent, imager1, imager2):
         super().__init__(parent)
-        layout = QHBoxLayout(self)
-
         self.camera1 = CamInterfaceApp(self, imager1)
         self.camera2 = CamInterfaceApp(self, imager2)
 
+        layout = QHBoxLayout(self)
         layout.addWidget(self.camera1)
         layout.addWidget(self.camera2)
         self.setLayout(layout)
@@ -84,7 +88,7 @@ class CamInterfaceApp(QWidget):
         self.colimage = None
         self.setImager(imager)
 
-        self.camera = ImageApp()
+        self.view = CameraView(imager)
         self.buttons = ToggleButtonApp()
         self.buttons.live_button.clicked.connect(self.toggleLiveImage)
         self.buttons.align_cent_button.clicked.connect(self.toggleAlignCent)
@@ -93,7 +97,7 @@ class CamInterfaceApp(QWidget):
         self.text.setAlignment(Qt.AlignHCenter)
 
         layout = QVBoxLayout()
-        layout.addWidget(self.camera)
+        layout.addWidget(self.view, 1)
         layout.addWidget(self.buttons)
         layout.addWidget(self.text)
         self.setLayout(layout)
@@ -164,8 +168,7 @@ class CamInterfaceApp(QWidget):
         """Set current image (with any crosshairs) as current frame"""
         qimage = QImage(image, image.shape[1], image.shape[0],
                         QImage.Format_RGB888)
-        self.camera.pixmap = QPixmap(qimage)
-        self.camera.label.setPixmap(self.camera.pixmap)
+        self.view.updateImage(qimage)
 
     def calcCurCentroid(self, image):
         self.y_cur_cent, self.x_cur_cent = compute_beam_centre(image)
@@ -198,31 +201,35 @@ class ToggleButtonApp(QWidget):
 
     def __init__(self):
         super().__init__()
-        layout = QHBoxLayout(self)
 
         self.live_button = QPushButton("Live Image")
         self.align_cent_button = QPushButton("Show Alignment Centroid")
         self.curr_cent_button = QPushButton("Show Current Centroid")
 
+        layout = QHBoxLayout(self)
         layout.addWidget(self.live_button)
         layout.addWidget(self.align_cent_button)
         layout.addWidget(self.curr_cent_button)
         self.setLayout(layout)
 
 
-class ImageApp(QWidget):
-    def __init__(self):
+class CameraView(QWidget):
+    def __init__(self, imager):
         super().__init__()
-        self.label = QLabel(self)
+        self._imager = imager
+        self._image = None
 
-        qimage = QImage(np.zeros((512, 512, 3), dtype=np.uint8), 512, 512,
-                        QImage.Format_RGB888)
-        self.pixmap = QPixmap(qimage)
-        self.label.setPixmap(self.pixmap)
+    def sizeHint(self):
+        shape = self._imager.get_shape()
+        return QSize(*shape)
 
-        layout = QHBoxLayout()
-        layout.addWidget(self.label, 1, Qt.AlignHCenter)
-        self.setLayout(layout)
+    def updateImage(self, image):
+        self._image = QPixmap(image)
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.drawPixmap(self.rect(), self._image)
 
 
 def compute_beam_centre(image):
