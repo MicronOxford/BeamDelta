@@ -168,10 +168,15 @@ class CamInterfaceApp(QWidget):
         self.camera.label.setPixmap(self.camera.pixmap)
 
     def calcCurCentroid(self, image):
-        masked = image.copy()
+        ## TODO: find out why we cut the 10px edges, and either
+        ## comment here why it is done, or remove the removal of
+        ## edges.
+        edge_len = 10
+        masked = image[edge_len:-edge_len, edge_len:-edge_len].copy()
         masked[masked < threshold_otsu(image)] = 0
-
-        self.y_cur_cent, self.x_cur_cent = center_of_mass(masked[10:-10, 10:-10])
+        self.y_cur_cent, self.x_cur_cent = center_of_mass(masked)
+        self.x_cur_cent += edge_len
+        self.y_cur_cent += edge_len
 
         if self.y_align_cent is None or self.x_align_cent is None:
             self.diff_x = None
