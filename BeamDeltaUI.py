@@ -77,8 +77,8 @@ class CamInterfaceApp(QWidget):
         self.live_flag = True
 
         self.align_cent_flag = False
-        self.x_alig_cent = None
-        self.y_alig_cent = None
+        self.x_align_cent = None
+        self.y_align_cent = None
 
         self.curr_cent_flag = False
         self.x_cur_cent = None
@@ -147,13 +147,13 @@ class CamInterfaceApp(QWidget):
         if not self.align_cent_flag:
             return
 
-        if self.x_alig_cent is None:
+        if self.x_align_cent is None:
             ## Calculate position of alignment centroid if not yet done
             self.calcCurCentroid(image[:, :, 0])
-            self.x_alig_cent = self.x_cur_cent
-            self.y_alig_cent = self.y_cur_cent
+            self.x_align_cent = self.x_cur_cent
+            self.y_align_cent = self.y_cur_cent
 
-        draw_crosshairs(image, self.x_alig_cent, self.y_alig_cent, 0)
+        draw_crosshairs(image, self.x_align_cent, self.y_align_cent, 0)
 
     def updateCurrentCentroid(self, image):
         """Check if should be shown and update current centroid"""
@@ -177,12 +177,12 @@ class CamInterfaceApp(QWidget):
 
         self.y_cur_cent, self.x_cur_cent = center_of_mass(imageOtsu[10:-10, 10:-10])
 
-        if self.y_alig_cent is None or self.x_alig_cent is None:
+        if self.y_align_cent is None or self.x_align_cent is None:
             self.diff_x = None
             self.diff_y = None
         else:
-            self.diff_y = self.y_cur_cent - self.y_alig_cent
-            self.diff_x = self.x_cur_cent - self.x_alig_cent
+            self.diff_y = self.y_cur_cent - self.y_align_cent
+            self.diff_x = self.x_cur_cent - self.x_align_cent
 
     @pyqtSlot()
     def toggleLiveImage(self):
@@ -190,8 +190,8 @@ class CamInterfaceApp(QWidget):
 
     @pyqtSlot()
     def toggleAlignCent(self):
-        self.x_alig_cent = None
-        self.y_alig_cent = None
+        self.x_align_cent = None
+        self.y_align_cent = None
         self.diff_x = None
         self.diff_y = None
         self.align_cent_flag = not self.align_cent_flag
