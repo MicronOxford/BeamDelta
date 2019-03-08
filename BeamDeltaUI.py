@@ -46,7 +46,6 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.form_widget = MainWidget(self, imager1, imager2)
         self.setCentralWidget(self.form_widget)
-        self.resize(self.form_widget.width()+100, self.form_widget.height()+100)
 
 
 class MainWidget(QWidget):
@@ -61,10 +60,6 @@ class MainWidget(QWidget):
         layout.addWidget(self.camera2)
         self.setLayout(layout)
 
-        self.main_width = self.camera1.width() + self.camera2.width()
-        self.main_height = max(self.camera1.height(), self.camera2.height())
-        self.resize(self.main_width, self.main_height)
-
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.updateImages)
         self.timer.start()
@@ -74,7 +69,6 @@ class MainWidget(QWidget):
         self.camera2.updateImage()
 
 class CamInterfaceApp(QWidget):
-
     def __init__(self, parent, imager):
         super().__init__(parent)
         self.mid_x = None
@@ -110,10 +104,6 @@ class CamInterfaceApp(QWidget):
         layout.addWidget(self.buttons)
         layout.addWidget(self.text)
         self.setLayout(layout)
-
-        self.app_width = min(self.camera.pixmap.width(), self.buttons.width())
-        self.app_height = self.camera.pixmap.height() + 125
-        self.resize(self.app_width, self.app_height)
 
     def setImager(self, imager):
         self.imager = imager
@@ -228,11 +218,6 @@ class ToggleButtonApp(QWidget):
         layout.addWidget(self.curr_cent_button)
         self.setLayout(layout)
 
-        self.total_width = (self.live_button.width()
-                            + self.align_cent_button.width()
-                            + self.curr_cent_button.width())
-        self.total_height = self.live_button.height()
-        self.resize(self.total_width, self.total_height)
 
 class ImageApp(QWidget):
     def __init__(self):
