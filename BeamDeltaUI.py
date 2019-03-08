@@ -60,13 +60,6 @@ class MainWidget(QWidget):
         layout.addWidget(self.camera2)
         self.setLayout(layout)
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.updateImages)
-        self.timer.start()
-
-    def updateImages(self):
-        self.camera1.updateImage()
-        self.camera2.updateImage()
 
 class CamInterfaceApp(QWidget):
     def __init__(self, parent, imager):
@@ -104,6 +97,10 @@ class CamInterfaceApp(QWidget):
         layout.addWidget(self.buttons)
         layout.addWidget(self.text)
         self.setLayout(layout)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.updateImage)
+        self.timer.start()
 
     def setImager(self, imager):
         self.imager = imager
