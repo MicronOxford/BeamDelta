@@ -168,11 +168,10 @@ class CamInterfaceApp(QWidget):
         self.camera.label.setPixmap(self.camera.pixmap)
 
     def calcCurCentroid(self, image):
-        thresh = threshold_otsu(image)
-        binaryIm = image > thresh
-        imageOtsu = image * binaryIm
+        masked = image.copy()
+        masked[masked < threshold_otsu(image)] = 0
 
-        self.y_cur_cent, self.x_cur_cent = center_of_mass(imageOtsu[10:-10, 10:-10])
+        self.y_cur_cent, self.x_cur_cent = center_of_mass(masked[10:-10, 10:-10])
 
         if self.y_align_cent is None or self.x_align_cent is None:
             self.diff_x = None
