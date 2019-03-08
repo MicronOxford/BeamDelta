@@ -22,7 +22,7 @@ import argparse
 import sys
 
 from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QMainWindow,
-                             QPushButton, QVBoxLayout, QWidget)
+                             QCheckBox, QVBoxLayout, QWidget)
 from PyQt5.QtGui import QImage, QPainter, QPixmap
 from PyQt5.QtCore import QSize, QTimer, Qt, pyqtSlot
 
@@ -71,13 +71,10 @@ class CamInterfaceApp(QWidget):
         self.mid_x = None
         self.mid_y = None
         self.arm_length = None
-        self.live_flag = True
 
-        self.align_cent_flag = False
         self.x_align_cent = None
         self.y_align_cent = None
 
-        self.curr_cent_flag = False
         self.x_cur_cent = None
         self.y_cur_cent = None
 
@@ -90,9 +87,8 @@ class CamInterfaceApp(QWidget):
 
         self.view = CameraView(imager)
         self.buttons = ToggleButtonApp()
-        self.buttons.live_button.clicked.connect(self.toggleLiveImage)
-        self.buttons.align_cent_button.clicked.connect(self.toggleAlignCent)
-        self.buttons.curr_cent_button.clicked.connect(self.toggleCurrCent)
+        self.buttons.align_cent_button.stateChanged.connect(self.toggleAlignCent)
+        self.buttons.curr_cent_button.stateChanged.connect(self.toggleCurrCent)
         self.text = QLabel(self)
         self.text.setAlignment(Qt.AlignHCenter)
 
@@ -116,7 +112,7 @@ class CamInterfaceApp(QWidget):
         self.colimage[:, :, 2] = self.colimage[:, :, 0]
 
     def updateImage(self):
-        if self.live_flag:
+        if self.buttons.live_button.isChecked():
             #Collect live image
             data = self.imager.acquire()
             self.colimage[:, :, 0] = np.array(data)
@@ -145,7 +141,7 @@ class CamInterfaceApp(QWidget):
 
     def updateAlignmentCentroid(self, image):
         """Check if should be shown and update alignment centroid"""
-        if not self.align_cent_flag:
+        if not self.buttons.align_cent_button.isChecked():
             return
 
         if self.x_align_cent is None:
@@ -158,7 +154,7 @@ class CamInterfaceApp(QWidget):
 
     def updateCurrentCentroid(self, image):
         """Check if should be shown and update current centroid"""
-        if not self.curr_cent_flag:
+        if not self.buttons.curr_cent_button.isChecked():
             return
 
         self.calcCurCentroid(image[:, :, 0])
@@ -179,32 +175,32 @@ class CamInterfaceApp(QWidget):
             self.diff_y = self.y_cur_cent - self.y_align_cent
             self.diff_x = self.x_cur_cent - self.x_align_cent
 
-    @pyqtSlot()
-    def toggleLiveImage(self):
-        self.live_flag = not self.live_flag
+    @pyqtSlot(int)
+    def toggleAlignCent(self, state):
+        if state != Qt.Checked:
+            self.x_align_cent = None
+            self.y_align_cent = None
+            self.diff_x = None
+            self.diff_y = None
 
-    @pyqtSlot()
-    def toggleAlignCent(self):
-        self.x_align_cent = None
-        self.y_align_cent = None
-        self.diff_x = None
-        self.diff_y = None
-        self.align_cent_flag = not self.align_cent_flag
+    @pyqtSlot(int)
+    def toggleCurrCent(self, state):
+        if state != Qt.Checked:
+            self.diff_x = None
+            self.diff_y = None
 
-    @pyqtSlot()
-    def toggleCurrCent(self):
-        self.diff_x = None
-        self.diff_y = None
-        self.curr_cent_flag = not self.curr_cent_flag
 
 class ToggleButtonApp(QWidget):
 
     def __init__(self):
         super().__init__()
 
-        self.live_button = QPushButton("Live Image")
-        self.align_cent_button = QPushButton("Show Alignment Centroid")
-        self.curr_cent_button = QPushButton("Show Current Centroid")
+        self.live_button = QCheckBox("Live")
+        self.live_button.setChecked(True) # default to Live
+        ## These are a bit misleading, because they don't control only
+        ## show/hide, they may also reset a previous position.
+        self.align_cent_button = QCheckBox("Show Reference")
+        self.curr_cent_button = QCheckBox("Show Current")
 
         layout = QHBoxLayout(self)
         layout.addWidget(self.live_button)
