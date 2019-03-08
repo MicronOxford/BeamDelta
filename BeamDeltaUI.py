@@ -168,16 +168,7 @@ class CamInterfaceApp(QWidget):
         self.camera.label.setPixmap(self.camera.pixmap)
 
     def calcCurCentroid(self, image):
-        ## TODO: find out why we cut the 10px edges, and either
-        ## comment here why it is done, or remove the removal of
-        ## edges.
-        edge_len = 10
-        masked = image[edge_len:-edge_len, edge_len:-edge_len].copy()
-        masked[masked < threshold_otsu(image)] = 0
-        self.y_cur_cent, self.x_cur_cent = center_of_mass(masked)
-        self.x_cur_cent += edge_len
-        self.y_cur_cent += edge_len
-
+        self.y_cur_cent, self.x_cur_cent = compute_beam_centre(image)
         if self.y_align_cent is None or self.x_align_cent is None:
             self.diff_x = None
             self.diff_y = None
@@ -210,7 +201,6 @@ class ToggleButtonApp(QWidget):
         layout = QHBoxLayout(self)
 
         self.live_button = QPushButton("Live Image")
-
         self.align_cent_button = QPushButton("Show Alignment Centroid")
         self.curr_cent_button = QPushButton("Show Current Centroid")
 
@@ -233,6 +223,22 @@ class ImageApp(QWidget):
         layout = QHBoxLayout()
         layout.addWidget(self.label, 1, Qt.AlignHCenter)
         self.setLayout(layout)
+
+
+def compute_beam_centre(image):
+    """
+    Returns:
+        tuple with coordinates for centre ordered by dimension,
+        i.e. (y, x)
+    """
+    ## TODO: find out why we cut the 10px edges, and either comment
+    ## here why it is done, or remove the removal of edges.
+    edge_len = 10
+    masked = image[edge_len:-edge_len, edge_len:-edge_len].copy()
+    masked[masked < threshold_otsu(image)] = 0
+    centre = center_of_mass(masked)
+    centre = [c+edge_len for c in centre]
+    return centre
 
 
 def draw_crosshairs(image, x, y, channel):
