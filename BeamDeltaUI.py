@@ -85,17 +85,31 @@ class CamInterfaceApp(QWidget):
         self.colimage = None
         self.setImager(imager)
 
-        self.view = CameraView(imager)
-        self.buttons = ToggleButtonApp()
-        self.buttons.align_cent_button.stateChanged.connect(self.toggleAlignCent)
-        self.buttons.curr_cent_button.stateChanged.connect(self.toggleCurrCent)
+        self.view = CameraView(self.imager)
+
+        self.live_button = QCheckBox("Live")
+        self.live_button.setChecked(True) # default to Live
+        ## These are a bit misleading, because they don't control only
+        ## show/hide, they may also reset a previous position.
+        self.align_cent_button = QCheckBox("Show Reference")
+        self.curr_cent_button = QCheckBox("Show Current")
+
+        self.align_cent_button.stateChanged.connect(self.toggleAlignCent)
+        self.curr_cent_button.stateChanged.connect(self.toggleCurrCent)
         self.text = QLabel(self)
         self.text.setAlignment(Qt.AlignHCenter)
 
         layout = QVBoxLayout()
         layout.addWidget(self.view, 1)
-        layout.addWidget(self.buttons)
+
+        buttons = QHBoxLayout()
+        buttons.addWidget(self.live_button)
+        buttons.addWidget(self.align_cent_button)
+        buttons.addWidget(self.curr_cent_button)
+        layout.addLayout(buttons)
+
         layout.addWidget(self.text)
+
         self.setLayout(layout)
 
         self.timer = QTimer(self)
@@ -112,7 +126,7 @@ class CamInterfaceApp(QWidget):
         self.colimage[:, :, 2] = self.colimage[:, :, 0]
 
     def updateImage(self):
-        if self.buttons.live_button.isChecked():
+        if self.live_button.isChecked():
             #Collect live image
             data = self.imager.acquire()
             self.colimage[:, :, 0] = np.array(data)
@@ -141,7 +155,7 @@ class CamInterfaceApp(QWidget):
 
     def updateAlignmentCentroid(self, image):
         """Check if should be shown and update alignment centroid"""
-        if not self.buttons.align_cent_button.isChecked():
+        if not self.align_cent_button.isChecked():
             return
 
         if self.x_align_cent is None:
@@ -154,7 +168,7 @@ class CamInterfaceApp(QWidget):
 
     def updateCurrentCentroid(self, image):
         """Check if should be shown and update current centroid"""
-        if not self.buttons.curr_cent_button.isChecked():
+        if not self.curr_cent_button.isChecked():
             return
 
         self.calcCurCentroid(image[:, :, 0])
@@ -188,25 +202,6 @@ class CamInterfaceApp(QWidget):
         if state != Qt.Checked:
             self.diff_x = None
             self.diff_y = None
-
-
-class ToggleButtonApp(QWidget):
-
-    def __init__(self):
-        super().__init__()
-
-        self.live_button = QCheckBox("Live")
-        self.live_button.setChecked(True) # default to Live
-        ## These are a bit misleading, because they don't control only
-        ## show/hide, they may also reset a previous position.
-        self.align_cent_button = QCheckBox("Show Reference")
-        self.curr_cent_button = QCheckBox("Show Current")
-
-        layout = QHBoxLayout(self)
-        layout.addWidget(self.live_button)
-        layout.addWidget(self.align_cent_button)
-        layout.addWidget(self.curr_cent_button)
-        self.setLayout(layout)
 
 
 class CameraView(QWidget):
