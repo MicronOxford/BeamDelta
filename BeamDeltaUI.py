@@ -82,10 +82,6 @@ class MainWidget(QWidget):
 class CamInterfaceApp(QWidget):
     def __init__(self, parent, imager):
         super().__init__(parent)
-        self.mid_x = None
-        self.mid_y = None
-        self.arm_length = None
-
         self.x_align_cent = None
         self.y_align_cent = None
 
