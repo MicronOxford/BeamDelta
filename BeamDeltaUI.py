@@ -188,9 +188,7 @@ class CamInterfaceApp(QWidget):
 
     @pyqtSlot(int)
     def changeLiveMode(self, state):
-        print(state)
         if state == Qt.Checked:
-            print('enabel')
             self.imager.enable()
         else:
             self.imager.disable()
@@ -216,8 +214,7 @@ class CameraView(QWidget):
         self._imager = imager
         shape = self._imager.shape()
         self._image = None # FIXME: we should not have to deal with Nones
-        self._setImage(np.zeros((self._shape[0], self._shape[1], 3),
-                                dtype=np.uint8))
+        self._setImage(np.zeros((shape[0], shape[1], 3), dtype=np.uint8))
 
     def _setImage(self, image):
         ## XXX: I really don't like this
