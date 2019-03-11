@@ -24,7 +24,7 @@ import sys
 from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QMainWindow,
                              QCheckBox, QVBoxLayout, QWidget)
 from PyQt5.QtGui import QImage, QPainter, QPixmap
-from PyQt5.QtCore import QSize, QTimer, Qt, pyqtSlot
+from PyQt5.QtCore import QObject, QSize, QTimer, Qt, pyqtSignal, pyqtSlot
 
 from microscope import clients
 import numpy as np
@@ -32,18 +32,32 @@ from skimage.filters import threshold_otsu
 from scipy.ndimage.measurements import center_of_mass
 
 
-class Imager:
-    def __init__(self, uri, exposure):
-        self._client = clients.DataClient(uri)
-        self._client.enable()
-        self._client.set_exposure_time(exposure)
+class Imager(QObject):
 
-    def get_shape(self):
+    imageReceived = pyqtSignal(np.ndarray)
+
+    def __init__(self, uri, exposure):
+        super().__init__()
+        self._client = clients.DataClient(uri)
+        self._client.set_exposure_time(exposure)
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._acquire)
+
+    def enable(self):
+        self._client.enable()
+        self._timer.start()
+
+    def disable(self):
+        self._timer.stop()
+        self._client.disable()
+
+    def shape(self):
         """Shape of images (width, height)"""
         return self._client.get_sensor_shape()
 
-    def acquire(self):
-        return self._client.trigger_and_wait()[0]
+    def _acquire(self):
+        image = self._client.trigger_and_wait()[0]
+        self.imageReceived.emit(image)
 
 
 class MainWindow(QMainWindow):
@@ -81,13 +95,16 @@ class CamInterfaceApp(QWidget):
         self.diff_x = None
         self.diff_y = None
 
-        self.imager = None
-        self.colimage = None
-        self.setImager(imager)
+        shape = imager.shape()
+        self.colimage = np.zeros((shape[0], shape[1], 3), dtype=np.uint8)
+
+        self.imager = imager
+        self.imager.imageReceived.connect(self.updateView)
 
         self.view = CameraView(self.imager)
 
         self.live_button = QCheckBox("Live")
+        self.live_button.stateChanged.connect(self.changeLiveMode)
         self.live_button.setChecked(True) # default to Live
         ## These are a bit misleading, because they don't control only
         ## show/hide, they may also reset a previous position.
@@ -112,24 +129,10 @@ class CamInterfaceApp(QWidget):
 
         self.setLayout(layout)
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.updateImage)
-        self.timer.start()
-
-    def setImager(self, imager):
-        self.imager = imager
-        data = self.imager.acquire()
-        data = np.array(data)
-        self.colimage = np.zeros((data.shape[0], data.shape[1], 3), dtype=np.uint8)
-        self.colimage[:, :, 0] = data
-        self.colimage[:, :, 1] = self.colimage[:, :, 0]
-        self.colimage[:, :, 2] = self.colimage[:, :, 0]
-
-    def updateImage(self):
+    def updateView(self, image):
         if self.live_button.isChecked():
             #Collect live image
-            data = self.imager.acquire()
-            self.colimage[:, :, 0] = np.array(data)
+            self.colimage[:, :, 0] = np.array(image)
             self.colimage[:, :, 1] = self.colimage[:, :, 0]
             self.colimage[:, :, 2] = self.colimage[:, :, 0]
 
@@ -138,7 +141,7 @@ class CamInterfaceApp(QWidget):
             self.setCurrentImage(self.colimage)
 
             # Reset values overwritten by crosshairs
-            self.colimage[:, :, 0] = np.array(data)
+            self.colimage[:, :, 0] = np.array(image)
             self.colimage[:, :, 1] = self.colimage[:, :, 0]
             self.colimage[:, :, 2] = self.colimage[:, :, 0]
         else:
@@ -176,9 +179,7 @@ class CamInterfaceApp(QWidget):
 
     def setCurrentImage(self, image):
         """Set current image (with any crosshairs) as current frame"""
-        qimage = QImage(image, image.shape[1], image.shape[0],
-                        QImage.Format_RGB888)
-        self.view.updateImage(qimage)
+        self.view.updateImage(image)
 
     def calcCurCentroid(self, image):
         self.y_cur_cent, self.x_cur_cent = compute_beam_centre(image)
@@ -188,6 +189,15 @@ class CamInterfaceApp(QWidget):
         else:
             self.diff_y = self.y_cur_cent - self.y_align_cent
             self.diff_x = self.x_cur_cent - self.x_align_cent
+
+    @pyqtSlot(int)
+    def changeLiveMode(self, state):
+        print(state)
+        if state == Qt.Checked:
+            print('enabel')
+            self.imager.enable()
+        else:
+            self.imager.disable()
 
     @pyqtSlot(int)
     def toggleAlignCent(self, state):
@@ -208,14 +218,22 @@ class CameraView(QWidget):
     def __init__(self, imager):
         super().__init__()
         self._imager = imager
-        self._image = None
+        shape = self._imager.shape()
+        self._image = None # FIXME: we should not have to deal with Nones
+        self._setImage(np.zeros((self._shape[0], self._shape[1], 3),
+                                dtype=np.uint8))
+
+    def _setImage(self, image):
+        ## XXX: I really don't like this
+        self._image = QPixmap(QImage(image.tobytes(),
+                                     image.shape[1], image.shape[0],
+                                     QImage.Format_RGB888))
 
     def sizeHint(self):
-        shape = self._imager.get_shape()
-        return QSize(*shape)
+        return QSize(*self._imager.shape())
 
     def updateImage(self, image):
-        self._image = QPixmap(image)
+        self._setImage(image)
         self.update()
 
     def paintEvent(self, event):
