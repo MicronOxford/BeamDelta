@@ -22,9 +22,10 @@ import argparse
 import sys
 
 from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QMainWindow,
-                             QCheckBox, QPushButton, QVBoxLayout, QWidget)
+                             QCheckBox, QPushButton, QShortcut, QVBoxLayout,
+                             QWidget)
 
-from PyQt5.QtGui import QImage, QPainter, QPen
+from PyQt5.QtGui import QImage, QKeySequence, QPainter, QPen
 
 from PyQt5.QtCore import(QObject, QPoint, QSize, QTimer, Qt,
                          pyqtSignal, pyqtSlot)
@@ -143,6 +144,15 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.setCentralWidget(CentralWidget(self, imager1, imager2))
 
+        for sequence, slot in ((QKeySequence.FullScreen, self.toggleFullScreen),
+                               (QKeySequence.Quit, self.close),
+                               (QKeySequence.Close, self.close),):
+            shortcut = QShortcut(sequence, self)
+            shortcut.activated.connect(slot)
+
+    @pyqtSlot()
+    def toggleFullScreen(self):
+        self.setWindowState(self.windowState() ^ Qt.WindowFullScreen)
 
 class CentralWidget(QWidget):
     def __init__(self, parent, imager1, imager2):
