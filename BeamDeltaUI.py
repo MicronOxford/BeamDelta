@@ -131,12 +131,9 @@ def compute_beam_centre(image):
         ## same value.  Return the middle of the image.
         return [l/2 for l in image.shape]
 
-    ## TODO: find out why we cut the 10px edges, and either comment
-    ## here why it is done, or remove the removal of edges.
-    edge_len = 10
-    masked = image[edge_len:-edge_len, edge_len:-edge_len].copy()
+    masked = image.copy()
     masked[masked < thresh] = 0
-    return [c+edge_len for c in center_of_mass(masked)]
+    return [c for c in center_of_mass(masked)]
 
 
 class MainWindow(QMainWindow):
