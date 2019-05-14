@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ## Copyright (C) 2019 Nicholas Hall <nicholas.hall@dtc.ox.ac.uk>
+## 2019 David Miguel Susano Pinto <david.pinto@bioch.ox.ac.uk>
 ##
 ## This file is part of BeamDelta.
 ##
