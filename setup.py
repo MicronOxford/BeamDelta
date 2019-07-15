@@ -1,4 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+## Copyright (C) 2016 David Pinto <david.pinto@bioch.ox.ac.uk>
+## Copyright (C) 2019 Nicholas Hall <nicholas.hall@dtc.ox.ac.uk>
+##
+## Copying and distribution of this file, with or without modification,
+## are permitted in any medium without royalty provided the copyright
+## notice and this notice are preserved.  This file is offered as-is,
+## without any warranty.
+
 import setuptools
+import setuptools.command.sdist
 
 project_name = 'BeamDelta'
 project_version = '1.0.0+dev'
@@ -10,6 +22,11 @@ manifest_files = [
     "COPYING",
     "README.md",
 ]
+
+class sdist(setuptools.command.sdist.sdist):
+    def make_distribution(self):
+        self.filelist.extend(manifest_files)
+        setuptools.command.sdist.sdist.make_distribution(self)
 
 setuptools.setup(
     name=project_name,
@@ -23,8 +40,6 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     python_requires = '>=3.5',
     install_requires = [
-        "sys",
-        "argparse",
         "PyQt5",
         "scikit-image",
         "scipy",
