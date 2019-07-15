@@ -12,9 +12,10 @@ position and the new beam.
 
 Called from the command line using the following format:
 
-"python BeamDeltaUI.py [exposure_time] [camera_1_uri] [camera_2_uri]"
+"BeamDeltaUI [exposure_time] [camera_1_uri] [camera_2_uri]"
 
-"exposure_time" has a default value of 150 ms. The camera URIs have the following format:
+"exposure_time" has a default value of 150 ms and can be set bu adding the flag --exposure-time. 
+The camera URIs have the following format:
 
 "PYRO:[microscope_device_name]@[ip_address]:[port]"
 
