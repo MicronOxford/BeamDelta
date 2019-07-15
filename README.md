@@ -38,4 +38,5 @@ Co-aligning two beams
 5) use two mirrors to walk the beam (description needed) so it matches both centroids.
 
 Required Python version: Python 3.6.3
+
 Required Python packages: sys, argparse, PyQt5, numpy, skimage, scipy and microscope
