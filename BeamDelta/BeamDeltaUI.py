@@ -292,7 +292,6 @@ def __main__():
 
     "PYRO:[microscope_device_name]@[ip_address]:[port]"
     """
-    print ("len=",len(sys.argv))
     if len(sys.argv) < 2:
         print("\nToo few parguments.\n", file=sys.stderr)
         print(__main__.__doc__, file=sys.stderr)
