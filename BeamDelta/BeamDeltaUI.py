@@ -138,7 +138,7 @@ def compute_beam_centre(image):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, imager1, imager2, parent=None):
+    def __init__(self, imager1, imager2=None, parent=None):
         super().__init__(parent)
         self.setCentralWidget(CentralWidget(self, imager1, imager2))
 
@@ -153,14 +153,16 @@ class MainWindow(QMainWindow):
         self.setWindowState(self.windowState() ^ Qt.WindowFullScreen)
 
 class CentralWidget(QWidget):
-    def __init__(self, parent, imager1, imager2):
+    def __init__(self, parent, imager1, imager2=None):
         super().__init__(parent)
         self.camera1 = AlignmentControl(imager1)
-        self.camera2 = AlignmentControl(imager2)
+        if imager2:
+            self.camera2 = AlignmentControl(imager2)
 
         layout = QHBoxLayout(self)
         layout.addWidget(self.camera1)
-        layout.addWidget(self.camera2)
+        if imager2:
+            layout.addWidget(self.camera2)
         self.setLayout(layout)
 
 
@@ -272,9 +274,10 @@ def parse_arguments(arguments):
                         metavar='EXPOSURE-TIME',
                         help='exposure time for both cameras')
     parser.add_argument('cam1_uri', action='store', type=str,
-                        metavar='CAM1-URI', help='URI for camera #1')
-    parser.add_argument('cam2_uri', action='store', type=str,
-                        metavar='CAM2-URI', help='URI for camera #2')
+                        metavar='CAM1-URI',nargs='+', help='URI for camera #1')
+#    parser.add_argument('cam2_uri', action='store', type=str,
+#                        default=None, required=False,
+#                        metavar='CAM2-URI', help='URI for camera #2')
     return parser.parse_args(arguments[1:])
 
 
@@ -289,9 +292,9 @@ def __main__():
 
     "PYRO:[microscope_device_name]@[ip_address]:[port]"
     """
-
-    if len(sys.argv) < 3:
-        print("\nToo few arguments.\n", file=sys.stderr)
+    print ("len=",len(sys.argv))
+    if len(sys.argv) < 2:
+        print("\nToo few parguments.\n", file=sys.stderr)
         print(__main__.__doc__, file=sys.stderr)
         sys.exit(1)
     elif len(sys.argv) > 5:
@@ -311,9 +314,12 @@ def contructUI(argv):
 
     args = parse_arguments(app.arguments())
 
-    cam1 = Imager(args.cam1_uri, args.exposure_time)
-    cam2 = Imager(args.cam2_uri, args.exposure_time)
-
+    cam1 = Imager(args.cam1_uri[0], args.exposure_time)
+    if len (args.cam1_uri)==2:
+        cam2 = Imager(args.cam1_uri[1], args.exposure_time)
+    else:
+        cam2=None
+        
     window = MainWindow(imager1=cam1, imager2=cam2)
     window.show()
     return app.exec()
