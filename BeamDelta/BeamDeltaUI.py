@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QMainWindow,
                              QCheckBox, QPushButton, QShortcut, QVBoxLayout,
                              QWidget)
 
-from PyQt5.QtGui import QImage, QKeySequence, QPainter, QPen
+from PyQt5.QtGui import QImage, QKeySequence, QPainter, QPen, QFont
 
 from PyQt5.QtCore import(QObject, QPoint, QSize, QTimer, Qt,
                          pyqtSignal, pyqtSlot)
@@ -209,7 +209,7 @@ class AlignmentText(QLabel):
 
         self._alignment = alignment
         self._alignment.changed.connect(self.updateText)
-
+        self.setFont(QFont('SansSerif',18))
         self.updateText()
 
     @pyqtSlot()
@@ -304,7 +304,6 @@ def contructUI(argv):
     if(len(args.cam_uri)>2):
         print("Error: Too many cam_uri entries BeamDelta can only handle two cameras")
         exit()
-
     cam1 = Imager(args.cam_uri[0], args.exposure_time)
     if len (args.cam_uri)==2:
         cam2 = Imager(args.cam_uri[1], args.exposure_time)
