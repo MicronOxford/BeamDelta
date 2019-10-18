@@ -301,6 +301,10 @@ def contructUI(argv):
 
     args = parse_arguments(app.arguments())
 
+    if(len(args.cam_uri)>2):
+        print("Error: Too many cam_uri entries BeamDelta can only handle two cameras")
+        exit()
+
     cam1 = Imager(args.cam_uri[0], args.exposure_time)
     if len (args.cam_uri)==2:
         cam2 = Imager(args.cam_uri[1], args.exposure_time)
