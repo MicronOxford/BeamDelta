@@ -272,12 +272,9 @@ def parse_arguments(arguments):
     parser.add_argument('--exposure-time', dest='exposure_time',
                         action='store', type=float, default=0.15,
                         metavar='EXPOSURE-TIME',
-                        help='exposure time for both cameras')
-    parser.add_argument('cam1_uri', action='store', type=str,
-                        metavar='CAM1-URI',nargs='+', help='URI for camera #1')
-#    parser.add_argument('cam2_uri', action='store', type=str,
-#                        default=None, required=False,
-#                        metavar='CAM2-URI', help='URI for camera #2')
+                        help='exposure time for camera(s), default 0.15 s')
+    parser.add_argument('cam_uri', action='store', type=str,
+                        metavar='CAM-URI',nargs='+', help='URI for 1 or 2 camera(s) each of the form PYRO:[microscope_device_name]@[ip_address]:[port]')
     return parser.parse_args(arguments[1:])
 
 
@@ -292,16 +289,7 @@ def __main__():
 
     "PYRO:[microscope_device_name]@[ip_address]:[port]"
     """
-    if len(sys.argv) < 2:
-        print("\nToo few parguments.\n", file=sys.stderr)
-        print(__main__.__doc__, file=sys.stderr)
-        sys.exit(1)
-    elif len(sys.argv) > 5:
-        print("\nToo many arguments.\n", file=sys.stderr)
-        print(__main__.__doc__, file=sys.stderr)
-        sys.exit(1)
-    else:
-        contructUI(sys.argv)
+    contructUI(sys.argv)
 
 
 
@@ -313,9 +301,9 @@ def contructUI(argv):
 
     args = parse_arguments(app.arguments())
 
-    cam1 = Imager(args.cam1_uri[0], args.exposure_time)
-    if len (args.cam1_uri)==2:
-        cam2 = Imager(args.cam1_uri[1], args.exposure_time)
+    cam1 = Imager(args.cam_uri[0], args.exposure_time)
+    if len (args.cam_uri)==2:
+        cam2 = Imager(args.cam_uri[1], args.exposure_time)
     else:
         cam2=None
         
