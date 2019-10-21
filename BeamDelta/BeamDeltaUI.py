@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ## Copyright (C) 2019 Nicholas Hall <nicholas.hall@dtc.ox.ac.uk>
-## 2019 David Miguel Susano Pinto <david.pinto@bioch.ox.ac.uk>
+## Copyright (C) 2019 David Miguel Susano Pinto <david.pinto@bioch.ox.ac.uk>
 ##
 ## This file is part of BeamDelta.
 ##
@@ -278,32 +278,7 @@ def parse_arguments(arguments):
     return parser.parse_args(arguments[1:])
 
 
-def __main__():
-    """Construct BeamDelta UI.
-
-    To run in the terminal, use::
-
-        BeamDelta [exposure_time] [camera_1_uri] [camera_2_uri]"
-
-    "exposure_time" has a default value of 150 ms. The camera URIs have the following format:
-
-    "PYRO:[microscope_device_name]@[ip_address]:[port]"
-    """
-
-    if len(sys.argv) < 3:
-        print("\nToo few arguments.\n", file=sys.stderr)
-        print(__main__.__doc__, file=sys.stderr)
-        sys.exit(1)
-    elif len(sys.argv) > 5:
-        print("\nToo many arguments.\n", file=sys.stderr)
-        print(__main__.__doc__, file=sys.stderr)
-        sys.exit(1)
-    else:
-        contructUI(sys.argv)
-
-
-
-def contructUI(argv):
+def main(argv):
     app = QApplication(argv)
     app.setApplicationName('BeamDelta')
     app.setOrganizationName('Micron Oxford')
@@ -318,6 +293,12 @@ def contructUI(argv):
     window.show()
     return app.exec()
 
+
+def __main__():
+    # Entry point for setuptools.  The scripts created by setuptools
+    # do not call the function with the command line arguments so a
+    # separate function is needed for that.
+    main(sys.argv)
 
 if __name__ == '__main__':
     __main__()
