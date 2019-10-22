@@ -205,6 +205,10 @@ class AlignmentText(QLabel):
         super().__init__()
         self.setAlignment(Qt.AlignHCenter)
 
+        font = self.font()
+        font.setPointSize(font.pointSize()*1.5)
+        self.setFont(font)
+
         self._alignment = alignment
         self._alignment.changed.connect(self.updateText)
 
