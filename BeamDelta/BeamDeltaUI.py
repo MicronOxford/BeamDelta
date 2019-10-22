@@ -138,9 +138,9 @@ def compute_beam_centre(image):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, imager1, imager2, parent=None):
+    def __init__(self, imagers, parent=None):
         super().__init__(parent)
-        self.setCentralWidget(CentralWidget(self, imager1, imager2))
+        self.setCentralWidget(CentralWidget(self, imagers))
 
         for sequence, slot in ((QKeySequence.FullScreen, self.toggleFullScreen),
                                (QKeySequence.Quit, self.close),
@@ -153,14 +153,13 @@ class MainWindow(QMainWindow):
         self.setWindowState(self.windowState() ^ Qt.WindowFullScreen)
 
 class CentralWidget(QWidget):
-    def __init__(self, parent, imager1, imager2):
+    def __init__(self, parent, imagers):
         super().__init__(parent)
-        self.camera1 = AlignmentControl(imager1)
-        self.camera2 = AlignmentControl(imager2)
+        self.cameras = [AlignmentControl(imager) for imager in imagers]
 
         layout = QHBoxLayout(self)
-        layout.addWidget(self.camera1)
-        layout.addWidget(self.camera2)
+        for camera in self.cameras:
+            layout.addWidget(camera)
         self.setLayout(layout)
 
 
@@ -275,10 +274,9 @@ def parse_arguments(arguments):
                         action='store', type=float, default=0.15,
                         metavar='EXPOSURE-TIME',
                         help='exposure time for both cameras')
-    parser.add_argument('cam1_uri', action='store', type=str,
-                        metavar='CAM1-URI', help='URI for camera #1')
-    parser.add_argument('cam2_uri', action='store', type=str,
-                        metavar='CAM2-URI', help='URI for camera #2')
+    parser.add_argument('cam_uris', action='store', type=str,
+                        metavar='CAM-URI', nargs='+',
+                        help='URIs for the cameras')
     return parser.parse_args(arguments[1:])
 
 
@@ -290,10 +288,9 @@ def main(argv):
 
     args = parse_arguments(app.arguments())
 
-    cam1 = Imager(args.cam1_uri, args.exposure_time)
-    cam2 = Imager(args.cam2_uri, args.exposure_time)
+    cams = [Imager(uri, args.exposure_time) for uri in args.cam_uris]
 
-    window = MainWindow(imager1=cam1, imager2=cam2)
+    window = MainWindow(imagers=cams)
     window.show()
     return app.exec()
 
