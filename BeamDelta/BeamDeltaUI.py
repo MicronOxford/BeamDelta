@@ -248,10 +248,10 @@ class AlignmentVisual(QWidget):
         painter.scale(self.width() / image.shape[0],
                       self.height() / image.shape[1])
 
-        def drawCentre(color, x, y):
+        def drawCentre(color, y, x):
             pen.setColor(color)
             painter.setPen(pen)
-            length = self.width() /50
+            length = self.width() /10
             painter.translate(x, y)
             painter.drawLine(-length, -length, length, length)
             painter.drawLine(-length, length, length, -length)
