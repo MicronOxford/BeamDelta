@@ -1,11 +1,12 @@
 # BeamDelta: Alignment tool
 
-A simple GUI interface for python-microscope which allows a compatible camera
-(see python-microscope compatibility list) to be used for optical alignment purposes.
-The Gui will display live images, calculate and mark beam centroids and then store
-an alignment centroid position. Once a position is stored the live centroid then 
-displays a pixel based delta position to allow precise alignment between the marked
-position and the new beam.
+A simple GUI interface for python-microscope which allows a compatible
+camera (see python-microscope compatibility list) to be used for
+optical alignment purposes.  The GUI will display live images,
+calculate and mark beam centroids and then store an alignment centroid
+position. Once a position is stored the live centroid then displays a
+pixel based delta position to allow precise alignment between the
+marked position and the new beam.
 
 BeamDelta is called from the command line using the following format:
 
@@ -39,3 +40,17 @@ beam.
 3. mark centroids on both cameras.
 4. turn of first beam, turn on second beam
 5. use two mirrors to walk the beam (description needed) so it matches both centroids.
+
+##Suggested parts list
+
+We include a suggested parts list in BeamDelta-parts-list.csv which
+enables the construction of a two camera alignment setup. This
+hardware configuration will allow both lens alignment and co-aligning
+two beams and has a small footprint so can relatively easily be
+mounted within an existing setup. 
+
+This is list just an example of parts which we have used to build the
+system. other optics, or cameras supported by [Python
+microscope](https://www.python-microscope.org/) can
+easily be used.
+
