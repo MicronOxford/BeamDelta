@@ -13,7 +13,7 @@ import setuptools
 import setuptools.command.sdist
 
 project_name = 'BeamDelta'
-project_version = '1.0.0+dev'
+project_version = '1.1.0'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
