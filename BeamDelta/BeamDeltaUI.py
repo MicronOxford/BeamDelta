@@ -140,6 +140,7 @@ def compute_beam_centre(image):
 class MainWindow(QMainWindow):
     def __init__(self, imagers, parent=None):
         super().__init__(parent)
+        self._imagers = imagers
         self.setCentralWidget(CentralWidget(self, imagers))
 
         for sequence, slot in ((QKeySequence.FullScreen, self.toggleFullScreen),
@@ -151,6 +152,11 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def toggleFullScreen(self):
         self.setWindowState(self.windowState() ^ Qt.WindowFullScreen)
+
+    def closeEvent(self, event):
+        for imager in self._imagers:
+            imager.disable()
+
 
 class CentralWidget(QWidget):
     def __init__(self, parent, imagers):
@@ -196,7 +202,6 @@ class AlignmentControl(QWidget):
             self._imager.enable()
         else:
             self._imager.disable()
-
 
 class AlignmentText(QLabel):
     """Text "view" for Alignment"""
