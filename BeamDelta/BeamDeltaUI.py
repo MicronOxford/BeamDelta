@@ -24,7 +24,7 @@ import sys
 
 from PyQt5.QtWidgets import (QApplication, QHBoxLayout, QLabel, QMainWindow,
                              QCheckBox, QPushButton, QShortcut, QVBoxLayout,
-                             QWidget)
+                             QWidget,QInputDialog)
 
 from PyQt5.QtGui import QImage, QKeySequence, QPainter, QPen
 
@@ -174,6 +174,9 @@ class AlignmentControl(QWidget):
         self._update_button = QPushButton('Update Reference')
         self._update_button.clicked.connect(self._alignment.updateReference)
 
+        self._exposure_button = QPushButton('Change Exp')
+        self._exposure_button.clicked.connect(self.changeExp)
+
         self._live_checkbox = QCheckBox("Live")
         self._live_checkbox.stateChanged.connect(self.changeLiveMode)
 
@@ -184,6 +187,7 @@ class AlignmentControl(QWidget):
 
         buttons = QHBoxLayout()
         buttons.addWidget(self._update_button)
+        buttons.addWidget(self._exposure_button)
         buttons.addWidget(self._live_checkbox)
         layout.addLayout(buttons)
 
@@ -197,7 +201,18 @@ class AlignmentControl(QWidget):
         else:
             self._imager.disable()
 
-
+    @pyqtSlot()
+    def changeExp(self):
+        exposure,ok = QInputDialog.getDouble(self,
+                                     "Input dualog","Enter exposure (s)")
+        liveState=self._live_checkbox.checkState
+        if ok:
+            if(liveState == Qt.Checked):
+                self._imager.disable()
+            self._imager._client.set_exposure_time(exposure)
+            if(liveState == Qt.Checked):
+                self._imager.enable()
+        
 class AlignmentText(QLabel):
     """Text "view" for Alignment"""
     def __init__(self, alignment):
@@ -215,7 +230,7 @@ class AlignmentText(QLabel):
 
     @pyqtSlot()
     def updateText(self):
-        self.setText("X distance = %f, Y distance = %f"
+        self.setText("X distance = %.2f, Y distance = %.2f"
                      % self._alignment.offset())
 
 
