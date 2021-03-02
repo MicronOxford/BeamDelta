@@ -55,7 +55,7 @@ class Imager(QObject):
         super().__init__()
         self._client = microscope.clients.DataClient(uri)
         self._client.set_exposure_time(exposure)
-
+        self._exposure = exposure
         self._image = np.zeros(self.shape(), dtype=np.uint8)
 
         self._timer = QTimer(self)
@@ -204,9 +204,10 @@ class AlignmentControl(QWidget):
     @pyqtSlot()
     def changeExp(self):
         exposure,ok = QInputDialog.getDouble(self,
-                                     "Input dualog","Enter exposure (s)")
+                                             "Input dualog","Enter exposure (s)", self._imager._exposure, 0, 10, 3)
         liveState=self._live_checkbox.checkState
         if ok:
+            self._imager._exposure = exposure
             if(liveState == Qt.Checked):
                 self._imager.disable()
             self._imager._client.set_exposure_time(exposure)
