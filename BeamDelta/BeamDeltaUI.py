@@ -256,7 +256,7 @@ class AlignmentVisual(QWidget):
         painter.drawImage(self.rect(), QImage(image.tobytes(), *image.shape,
                                               QImage.Format_Grayscale8))
 
-        painter.setCompositionMode(QPainter.CompositionMode_Lighten)
+        painter.setCompositionMode(QPainter.CompositionMode_SourceIn)
         pen = QPen()
         pen.setWidth(self.width()/500)
         pen.setCapStyle(Qt.RoundCap)
