@@ -204,7 +204,7 @@ class AlignmentControl(QWidget):
     @pyqtSlot()
     def changeExp(self):
         exposure,ok = QInputDialog.getDouble(self,
-                                             "Input dualog","Enter exposure (s)", self._imager._exposure, 0, 10, 3)
+                                             "Input dialog","Enter exposure (s)", self._imager._exposure, 0, 10, 3)
         liveState=self._live_checkbox.checkState
         if ok:
             self._imager._exposure = exposure
