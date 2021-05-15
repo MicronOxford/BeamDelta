@@ -237,7 +237,7 @@ class AlignmentText(QLabel):
 
     @pyqtSlot()
     def updateText(self):
-        self.setText("X distance = %.2f, Y distance = %.2f"
+        self.setText("X distance = % .2f, Y distance = % .2f"
                      % self._alignment.offset())
 
 
